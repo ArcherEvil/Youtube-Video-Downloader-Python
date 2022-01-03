@@ -2,6 +2,7 @@
 
 from tkinter import *
 from tkinter import ttk
+from tkinter import filedialog
 import tkinter.font as tkFont
 from PIL import ImageTk, Image
 import io
@@ -59,6 +60,11 @@ class app:
     def create_frame(self, root):
         return Frame(root, highlightthickness=0, borderwidth=0)
 
+    def get_best_fps(self, lists):
+        lists.sort()
+        lists[::1]
+        return lists[0]
+    
     def add(self, data):
         return self.everything.append(data)
     
@@ -75,7 +81,65 @@ class app:
         return lista
 
     def download(self, value):
-        print('Suquecesso')
+        folder = str(filedialog.askdirectory())
+
+        try:
+            for n in self.message:
+                n.destroy()
+        except:
+            pass
+        self.message = []
+        delete = []
+        self.fps = []
+
+        # Progress bar
+        downloadframe = self.create_frame(self.mainframe)
+        delete.append(downloadframe)
+        downloadframe.pack()
+        down_text = Label(downloadframe, text="Downloading: ")
+        delete.append(down_text)
+        down_text.grid(row=0, column=0)
+        down_progressbar = ttk.Progressbar(downloadframe, orient=HORIZONTAL, 
+        length=200, mode="indeterminate")
+        delete.append(down_progressbar)
+        down_progressbar.grid(row=0, column=1)
+        down_progressbar.start(20)
+
+        if value == 0:
+            self.streams.filter(only_audio=True, mime_type="audio/mp4")[-1].download(folder)
+        else:
+            try:
+                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", progressive=True):
+                    self.fps.append(n.fps)
+                    self.frame = int(self.get_best_fps(self.fps))
+                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", progressive=True, fps=self.frame):
+                    stream = self.streams.get_by_itag(int(n.itag))
+                    stream.download()
+                    break
+            except:
+                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4"):
+                    self.fps.append(n.fps)
+                    self.frame = int(self.get_best_fps(self.fps))
+                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", fps=self.frame):
+                    stream = self.streams.get_by_itag(int(n.itag))
+                    stream.download()
+                    break
+
+        
+            finally:
+        
+                for n in delete:
+                    n.destroy()        
+        
+        downloadframe = self.create_frame(self.mainframe)
+        self.message.append(downloadframe)
+        downloadframe.pack()
+        down_text_font = tkFont.Font(family="Segoe UI Bold", size=20)
+        down_text = Label(downloadframe, text="Downloaded!", font=down_text_font)
+        self.message.append(down_text)
+        down_text.pack()
+
+        
     
     def get_image(self, url):
         my_page = urlopen(url)
@@ -122,8 +186,6 @@ class app:
             print('Success')
             for a in self.everything:
                 a.destroy()
-
-
         except Exception as e:
             messagetext = Label(self.searchframe, text='Insert a Valid URL')
             messagetext.grid(row=1, column=0, columnspan=2)
@@ -162,11 +224,19 @@ class app:
             radio_buttons = Radiobutton(rbframe, text=n, variable=self.resol, value=x)
             radio_buttons.grid(column=(x), row=0, pady=10)
             self.add(radio_buttons)
+        
+        if len(self.resol_list) > 6:
+            warn_title_font = tkFont.Font(family='Segoe UI Black', size=12)
+            warn_title = Label(rframe, 
+            text=f'WARNING: ABOVE 720p THERE WILL BE NO AUDIO.', font=warn_title_font)
+            self.add(warn_title)
+            warn_title.pack()        
 
         # Download Button
 
-        download_button = Button(rframe, fg='#ffffff', bg='#212121', text='Search', 
-        command=lambda: threading.Thread(target=lambda: self.download()).start(),
+        download_button_font = tkFont.Font(family="Segoe UI Black", size=10)
+        download_button = Button(rframe,font=download_button_font, fg='#ffffff', bg='#420400', text='Download', 
+        command=lambda: threading.Thread(target=lambda: self.download(self.resol.get())).start(),
         pady=10, padx=15) # Search Button
         self.add(download_button)
         download_button.pack()
