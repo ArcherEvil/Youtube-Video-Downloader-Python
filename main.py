@@ -1,20 +1,20 @@
 # The Main File with the main Source Code !!!!!!
 
 from tkinter import *
-from tkinter import ttk
-from tkinter import filedialog
+from tkinter import ttk, filedialog
 import tkinter.font as tkFont
 from PIL import ImageTk, Image
-import io
+import io, time, threading
 from pytube import YouTube
-import threading
-import time
 from urllib.request import urlopen
 
 
 root = Tk() # Tkinter root
-root.title("Youtube Video Downloader (By:Archer)") #Tkinter title
-#root.geometry("500x150") #tkinter window Size
+root.title("YT Downloader (By:Archer)") #Tkinter title
+try:
+    root.iconbitmap("icon.ico") # Icon
+except:
+    pass
 
 
 class app:
@@ -32,7 +32,7 @@ class app:
         titleframe = self.create_frame(self.mainframe) # title
         titleframe.pack()
         title_font = tkFont.Font(family="Segoe UI Black", size=30)
-        title = Label(titleframe, text="Yt Video Downloader", font=title_font, fg="#383838", padx=20)
+        title = Label(titleframe, text="Made by: /ArcherEvil", font=title_font, fg="#383838", padx=20)
         title.pack()
 
         #-----------#
@@ -60,11 +60,6 @@ class app:
     def create_frame(self, root):
         return Frame(root, highlightthickness=0, borderwidth=0)
 
-    def get_best_fps(self, lists):
-        lists.sort()
-        lists[::1]
-        return lists[0]
-    
     def add(self, data):
         return self.everything.append(data)
     
@@ -90,7 +85,7 @@ class app:
             pass
         self.message = []
         delete = []
-        self.fps = []
+        
 
         # Progress bar
         downloadframe = self.create_frame(self.mainframe)
@@ -105,31 +100,35 @@ class app:
         down_progressbar.grid(row=0, column=1)
         down_progressbar.start(20)
 
+
         if value == 0:
             self.streams.filter(only_audio=True, mime_type="audio/mp4")[-1].download(folder)
         else:
-            try:
-                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", progressive=True):
-                    self.fps.append(n.fps)
-                    self.frame = int(self.get_best_fps(self.fps))
-                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", progressive=True, fps=self.frame):
+            
+            if bool(self.streams.filter(resolution=self.resol_list[value], file_extension='mp4', progressive=True)):
+                print('tem progressive')
+                for n in self.streams.filter(resolution=self.resol_list[value], file_extension='mp4', progressive=True):
+                    print(n)
                     stream = self.streams.get_by_itag(int(n.itag))
-                    stream.download()
+                    stream.download(folder)
                     break
-            except:
-                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4"):
-                    self.fps.append(n.fps)
-                    self.frame = int(self.get_best_fps(self.fps))
-                for n in self.streams.filter(resolution=self.resol_list[value], mime_type="video/mp4", fps=self.frame):
-                    stream = self.streams.get_by_itag(int(n.itag))
-                    stream.download()
-                    break
+            else:
+                print('n tem progressiva')
+                if bool(self.streams.filter(resolution=self.resol_list[value], file_extension='mp4')):
+                    for n in self.streams.filter(resolution=self.resol_list[value], file_extension='mp4'):
+                        print(n)
+                        stream = self.streams.get_by_itag(int(n.itag))
+                        stream.download(folder)
+                        break
+                else:
+                    for n in self.streams.filter(resolution=self.resol_list[value]):
+                        print(n)
+                        stream = self.streams.get_by_itag(int(n.itag))
+                        stream.download(folder)
+                        break
 
-        
-            finally:
-        
-                for n in delete:
-                    n.destroy()        
+        for n in delete:
+            n.destroy()        
         
         downloadframe = self.create_frame(self.mainframe)
         self.message.append(downloadframe)
@@ -137,9 +136,7 @@ class app:
         down_text_font = tkFont.Font(family="Segoe UI Bold", size=20)
         down_text = Label(downloadframe, text="Downloaded!", font=down_text_font)
         self.message.append(down_text)
-        down_text.pack()
-
-        
+        down_text.pack()  
     
     def get_image(self, url):
         my_page = urlopen(url)
@@ -240,21 +237,6 @@ class app:
         pady=10, padx=15) # Search Button
         self.add(download_button)
         download_button.pack()
-
-        
-        
-
-
-
-
-
-        
-
-        
-
-
-            
-
 
 if __name__ == '__main__':
     app(root)
